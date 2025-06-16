@@ -23,7 +23,7 @@ function MyPage() {
     }
 
     fetchData();
-  }, []);
+  }, [API_URL]);
 
   if (!userInfo) return <div>로딩중...</div>;
 

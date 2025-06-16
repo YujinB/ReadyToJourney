@@ -38,7 +38,7 @@ function Home() {
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
-    fetch("${API_URL}/events")
+    fetch(`${API_URL}/events`)
       .then((res) => res.json())
       .then((data) => {
         // 날짜 문자열을 Date 객체로 변환
@@ -267,7 +267,7 @@ function Home() {
                   };
                   setEvents([...events, newEvent]);
 
-                  fetch("${API_URL}/events", {
+                  fetch(`${API_URL}/events`, {
                     method: "POST",
                     headers: {
                       "Content-Type": "application/json"
