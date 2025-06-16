@@ -1,0 +1,75 @@
+{
+  "userInfo": {
+    "id": 1,
+    "name": "홍길동",
+    "email": "hong@example.com"
+  },
+  "events": [
+    {
+      "id": "1",
+      "title": "여행 일정",
+      "start": "2025-06-10T10:00:00.000Z",
+      "end": "2025-06-18T12:00:00.000Z",
+      "country": "USA",
+      "description": "",
+      "color": "rgb(190, 220, 240)",
+      "expenses": [
+        {
+          "date": "2025-06-12T15:00:00.000Z",
+          "amount": 40988,
+          "foreignAmount": 30,
+          "currency": "USD",
+          "category": "식비"
+        },
+        {
+          "date": "2025-06-15T15:00:00.000Z",
+          "amount": 10930,
+          "foreignAmount": 8,
+          "currency": "USD",
+          "category": "교통비"
+        },
+        {
+          "date": "2025-06-14T15:00:00.000Z",
+          "amount": 409878,
+          "foreignAmount": 300,
+          "currency": "USD",
+          "category": "쇼핑"
+        }
+      ],
+      "totalExpense": 461796
+    },
+    {
+      "id": "2",
+      "title": "오사카 여행",
+      "country": "일본",
+      "description": "유니버설 스튜디오 방문",
+      "start": "2025-06-20T00:00:00.000Z",
+      "end": "2025-06-22T09:00:00.000Z",
+      "color": "rgb(200, 250, 220)",
+      "expenses": [
+        {
+          "date": "2025-06-19T15:00:00.000Z",
+          "amount": 28440,
+          "foreignAmount": 3000,
+          "currency": "JPY",
+          "category": "식비"
+        },
+        {
+          "date": "2025-06-19T15:00:00.000Z",
+          "amount": 474000,
+          "foreignAmount": 50000,
+          "currency": "USD",
+          "category": "쇼핑"
+        },
+        {
+          "date": "2025-06-21T15:00:00.000Z",
+          "amount": 18960,
+          "foreignAmount": 2000,
+          "currency": "JPY",
+          "category": "교통비"
+        }
+      ],
+      "totalExpense": 521400
+    }
+  ]
+}

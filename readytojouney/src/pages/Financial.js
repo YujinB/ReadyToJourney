@@ -6,6 +6,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import styles from './Financial.module.css';
 import CurrencyModal from './CurrencyModal.js';
+const API_URL = `${process.env.REACT_APP_API_URL}/events`;
 
 function Financial() {
   const locales = { ko };
@@ -31,18 +32,56 @@ function Financial() {
     expenseForeignAmount: '',
   });
 
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: "여행 일정",
-      start: new Date(2025, 5, 10, 10, 0),
-      end: new Date(2025, 5, 18, 12, 0),
-      country: "Taiwan",
-      description: " ",
-      color: getRandomColor(),
-      expenses: []
-    },
-  ]);
+  const [events, setEvents] = useState([]);
+
+  const calculateTotalExpense = (expenses = []) => {
+  return expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+};
+
+
+  // 서버에서 이벤트 데이터 불러오기
+  useEffect(() => {
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => {
+        // 날짜 문자열을 Date 객체로 변환
+        const parsedEvents = data.map(event => {
+        const expenses = event.expenses || [];
+        const totalExpense = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+        
+        return {
+          ...event,
+          start: new Date(event.start),
+          end: new Date(event.end),
+          expenses: expenses,
+          totalExpense: totalExpense,
+        };
+      });
+        setEvents(parsedEvents);
+      })
+      .catch(err => console.error("데이터 로드 실패:", err));
+  }, []);
+
+  // 1. 컴포넌트 상단에 추가
+useEffect(() => {
+  async function fetchInitialRate() {
+    if (!eventForm.expenseCurrency) return;
+    try {
+      const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${eventForm.expenseCurrency}`);
+      const data = await res.json();
+      const rate = data.rates["KRW"] || 1;
+      setExchangeRate(rate);
+    } catch (err) {
+      console.error("초기 환율 불러오기 실패", err);
+    }
+  }
+  fetchInitialRate();
+}, [eventForm.expenseCurrency]);
+
+// 2. 외화 금액 입력 이벤트 핸들러는 그대로 유지 (exchangeRate 사용)
+
+// 3. 외화 선택 시 fetch 후 상태 변경 부분도 그대로 유지
+
 
   const generateDailyExpenseEvents = () => {
     const expenseMap = new Map();
@@ -95,13 +134,14 @@ function Financial() {
       ...relatedEvent,
       expenseDate: start,
       expenseAmount: '',
-      expenseCategory: ''
+      expenseCategory: '',
+      expenseCurrency: 'USD',
     });
     setIsEditingExpense(false);
     setShowModal(true);
   };
 
-  const handleExpenseSubmit = () => {
+  const handleExpenseSubmit = async() => {
     const {
       expenseDate,
       expenseAmount,
@@ -137,10 +177,21 @@ function Financial() {
           });
         }
 
-        return { ...event, expenses: updatedExpenses };
+        return { ...event, expenses: updatedExpenses, totalExpense: calculateTotalExpense(updatedExpenses),};
       }
       return event;
     });
+    
+    try {
+    // 서버에 PATCH (업데이트) 요청 보내기
+    const updatedEvent = updatedEvents.find(e => e.id === selectedEvent.id);
+    const res = await fetch(`${API_URL}/${selectedEvent.id}`, {
+      method: 'PATCH', // 또는 PUT도 가능 (전체 덮어쓰기)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedEvent),
+    });
+
+    if (!res.ok) throw new Error('서버 업데이트 실패');
 
     setEvents(updatedEvents);
 
@@ -157,6 +208,10 @@ function Financial() {
 
     setIsEditingExpense(false);
     setEditingIndex(null);
+    } catch (error) {
+    alert("서버와 동기화에 실패했습니다.");
+    console.error(error);
+  }
   };
 
   const getExpensesByDate = (event, date) => {
@@ -178,24 +233,39 @@ function Financial() {
     setIsEditingExpense(true);
   };
 
-  const handleDeleteExpense = (idxToDelete) => {
+  const handleDeleteExpense = async(idxToDelete) => {
     if (!window.confirm("정말 삭제하시겠습니까?")) return;
     const updatedEvents = events.map((event) =>
       event.id === selectedEvent.id
         ? {
             ...event,
             expenses: event.expenses.filter((_, idx) => idx !== idxToDelete),
+            totalExpense: calculateTotalExpense(event.expenses.filter((_, idx) => idx !== idxToDelete)),
           }
         : event
     );
+    try {
+    const updatedEvent = updatedEvents.find(e => e.id === selectedEvent.id);
+    const res = await fetch(`${API_URL}/${selectedEvent.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedEvent),
+    });
+
+    if (!res.ok) throw new Error('서버 삭제 반영 실패');
+
     setEvents(updatedEvents);
-    const updatedSelected = updatedEvents.find(e => e.id === selectedEvent.id);
-    setSelectedEvent(updatedSelected);
+    setSelectedEvent(updatedEvent);
     setEventForm((prev) => ({
       ...prev,
-      expenses: updatedSelected.expenses,
+      expenses: updatedEvent.expenses,
     }));
-  };
+
+  } catch (error) {
+    alert("서버와 동기화에 실패했습니다.");
+    console.error(error);
+  }
+};
 
   const CustomToolbar = ({ label, onNavigate }) => {
     const formattingLabel = label.split(" ").reverse().join(" ");
@@ -246,7 +316,7 @@ function Financial() {
           } else {
             return {
               style: {
-                backgroundColor: event.color,
+                backgroundColor: event.color || getRandomColor(),
                 color: "black",
                 borderRadius: "5px",
                 padding: "3px",
@@ -277,7 +347,8 @@ function Financial() {
                     setEventForm((prev) => ({
                       ...prev,
                       expenseCurrency: newCurrency,
-                      expenseAmount: (foreignAmount * rate).toFixed(0)
+                      expenseForeignAmount: '',
+                      expenseAmount: '',
                     }));
                   } catch (err) {
                     alert("환율 정보를 불러오지 못했습니다.");

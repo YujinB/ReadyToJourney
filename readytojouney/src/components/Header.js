@@ -15,7 +15,7 @@ function header() {
                 <Link to="/financial" className={styles.noUnderline}>
                     <p>Financial</p>
                 </Link>
-                <Link to="/" className={styles.noUnderline}>
+                <Link to="/MyPage" className={styles.noUnderline}>
                     <p>Mypage</p>
                 </Link> 
             </div>

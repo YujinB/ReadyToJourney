@@ -6,6 +6,7 @@ import Home from "./pages/Home"
 import './App.css';
 import Template from "./components/Template";
 import Financial from "./pages/Financial";
+import MyPage from "./pages/MyPage";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/financial" element={<Financial />} />
+            <Route path="/MyPage" element={<MyPage />} />
           </Routes>
         </Template>
       </Router>

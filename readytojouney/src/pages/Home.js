@@ -6,7 +6,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import styles from './Home.module.css'
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
-
+const API_URL = process.env.REACT_APP_API_URL;
 
 function Home() {
   const DragAndDropCalendar = withDragAndDrop(Calendar);
@@ -35,17 +35,21 @@ function Home() {
   const isFormInvalid = isInvalidDateRange || isInvalidTitle;
   
   // ✅ 드래그/리사이즈를 위해 state로 관리
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: "여행 일정",
-      start: new Date(2025, 5, 10, 10, 0),
-      end: new Date(2025, 5, 18, 12, 0),
-      country : "Taiwan",
-      description: " ",
-      color: getRandomColor(),
-    },
-  ]);
+  const [events, setEvents] = useState([]);
+
+  useEffect(() => {
+    fetch("${API_URL}/events")
+      .then((res) => res.json())
+      .then((data) => {
+        // 날짜 문자열을 Date 객체로 변환
+        const parsedEvents = data.map((event) => ({
+          ...event,
+          start: new Date(event.start),
+          end: new Date(event.end)
+        }));
+        setEvents(parsedEvents);
+      });
+  }, []);
 
   const calendarStyle = {
     height: "620px",
@@ -78,6 +82,15 @@ function Home() {
       evt.id === event.id ? { ...evt, start, end } : evt
     );
     setEvents(updatedEvents);
+
+    fetch(`${API_URL}/events/${event.id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ ...event, start, end, color: event.color}),
+  });
+
   };
 
   // ✅ 이벤트 리사이즈 시 호출
@@ -86,6 +99,14 @@ function Home() {
       evt.id === event.id ? { ...evt, start, end } : evt
     );
     setEvents(updatedEvents);
+
+    fetch(`${API_URL}/events/${event.id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ ...event, start, end, color: event.color}),
+  });
   };
 
   function formatInputDate(date) {
@@ -156,9 +177,10 @@ function Home() {
         selectable
         components={{ toolbar: CustomToolbar }}
         eventPropGetter={(event) => {
+          const bgColor = event.color || getRandomColor();
           return {
             style: {
-              backgroundColor: event.color,
+              backgroundColor: bgColor,
               color: "black",
               borderRadius: "5px",
               padding: "3px",
@@ -238,12 +260,21 @@ function Home() {
 
                   const newEvent = {
                     ...eventForm,
-                    id: events.length + 1,
+                    id: Math.max(0, ...events.map(e => e.id || 0)) + 1,
                     start: new Date(eventForm.start),
                     end: new Date(eventForm.end),
                     color: getRandomColor()
                   };
                   setEvents([...events, newEvent]);
+
+                  fetch("${API_URL}/events", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(newEvent)
+                  });
+
                   setShowModal(false);
                   setShowValidationError(false);
                 }}
@@ -261,6 +292,17 @@ function Home() {
                         e.id === selectedEvent.id ? { ...eventForm } : e
                       );
                       setEvents(updatedEvents);
+                      const updatedEvent = { ...eventForm };
+
+
+                      fetch(`${API_URL}/events/${selectedEvent.id}`, {
+                        method: "PUT",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(updatedEvent),
+                      });
+
                       setIsEditing(false);
                       setShowModal(false);
                       setShowValidationError(false);
@@ -287,6 +329,11 @@ function Home() {
                     const confirmDelete = window.confirm("정말 삭제하시겠습니까?");
                     if (confirmDelete) {
                       setEvents(events.filter(e => e.id !== selectedEvent.id));
+
+                       fetch(`${API_URL}/events/${selectedEvent.id}`, {
+                        method: "DELETE",
+                      }); 
+
                       setShowModal(false);
                     }
                   }}>
