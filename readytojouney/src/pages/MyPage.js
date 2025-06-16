@@ -61,7 +61,7 @@ function MyPage() {
               <p>
                 일정: {new Date(plan.start).toLocaleDateString()} ~ {new Date(plan.end).toLocaleDateString()}
                 </p>
-              <p>총 지출: {plan.totalExpense.toLocaleString()} 원</p>
+              <p>  총 지출: {plan.totalExpense != null ? plan.totalExpense.toLocaleString() + " 원" : ""} </p>
             </div>
           ))
         )}

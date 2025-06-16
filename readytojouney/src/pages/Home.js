@@ -45,7 +45,8 @@ function Home() {
         const parsedEvents = data.map((event) => ({
           ...event,
           start: new Date(event.start),
-          end: new Date(event.end)
+          end: new Date(event.end),
+          totalExpense: event.totalExpense ?? 0,  // ← 기본값 처리
         }));
         setEvents(parsedEvents);
       });
@@ -263,7 +264,8 @@ function Home() {
                     id: Math.max(0, ...events.map(e => e.id || 0)) + 1,
                     start: new Date(eventForm.start),
                     end: new Date(eventForm.end),
-                    color: getRandomColor()
+                    color: getRandomColor(),
+                    totalExpense: 0
                   };
                   setEvents([...events, newEvent]);
 
